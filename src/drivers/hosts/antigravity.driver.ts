@@ -5,6 +5,7 @@ import {
   type BundlePayload,
   filterDialectBlocks,
   type HostId,
+  resolveHostModel,
   type SpecialistBlueprint,
   type UnitCapability,
 } from '../blueprint.ts'
@@ -16,6 +17,8 @@ const AGY_TOOL_MAP: Record<UnitCapability, readonly string[]> = {
   'web:fetch': ['read_url_content'],
   'web:search': ['search_web'],
 }
+
+const AGY_NATIVE_MODELS = new Set(['inherit', 'flash_lite', 'flash', 'pro'])
 
 export class AntigravityHostDriver extends BaseHostDriver {
   readonly hostId: HostId = 'antigravity'
@@ -42,11 +45,14 @@ export class AntigravityHostDriver extends BaseHostDriver {
       }
     }
 
+    const { model } = resolveHostModel(spec, 'antigravity')
+    const resolvedModel = model && AGY_NATIVE_MODELS.has(model) ? model : 'inherit'
+
     const lines = [
       '---',
       `name: ${spec.id}`,
       `description: ${JSON.stringify(spec.summary)}`,
-      'model: inherit',
+      `model: ${resolvedModel}`,
       `tools: [${tools.join(', ')}]`,
       '---',
       '',

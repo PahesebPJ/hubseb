@@ -5,7 +5,9 @@ import {
   type BundlePayload,
   filterDialectBlocks,
   type HostId,
+  parseModelSpec,
   type ReasoningTier,
+  resolveHostModel,
   type SpecialistBlueprint,
 } from '../blueprint.ts'
 
@@ -32,9 +34,22 @@ export class CodexHostDriver extends BaseHostDriver {
     const hasShell = spec.capabilities.includes('shell:run')
     const safeInstructions = spec.instructions.replace(/"""/g, '\\"\\"\\"')
 
+    const { model, provider } = resolveHostModel(spec, 'codex')
+    const modelLines: string[] = []
+    if (model && model !== 'inherit' && model !== 'default') {
+      const parsed = parseModelSpec(model)
+      const effectiveProvider = provider ?? parsed.provider
+      const modelName = parsed.model ?? model
+      modelLines.push(`model = ${JSON.stringify(modelName)}`)
+      if (effectiveProvider) {
+        modelLines.push(`model_provider = ${JSON.stringify(effectiveProvider)}`)
+      }
+    }
+
     const lines = [
       `name = ${JSON.stringify(spec.id)}`,
       `description = ${JSON.stringify(spec.summary)}`,
+      ...modelLines,
       `model_reasoning_effort = ${JSON.stringify(CODEX_EFFORT[spec.tier])}`,
       `developer_instructions = """\n${safeInstructions}\n"""`,
       '',

@@ -5,6 +5,7 @@ import {
   type BundlePayload,
   filterDialectBlocks,
   type HostId,
+  resolveHostModel,
   type SpecialistBlueprint,
 } from '../blueprint.ts'
 
@@ -33,10 +34,17 @@ export class OpenCodeHostDriver extends BaseHostDriver {
     const canFetch = spec.capabilities.includes('web:fetch')
     const canSearch = spec.capabilities.includes('web:search')
 
+    const { model, provider } = resolveHostModel(spec, 'opencode')
+    let resolvedModel: string | undefined
+    if (model && model !== 'inherit' && model !== 'default') {
+      resolvedModel = provider && !model.includes('/') ? `${provider}/${model}` : model
+    }
+
     const lines = [
       '---',
       `description: ${JSON.stringify(spec.summary)}`,
       'mode: subagent',
+      ...(resolvedModel ? [`model: ${resolvedModel}`] : []),
       `steps: ${spec.maxSteps}`,
       'permission:',
       `  edit: ${canWrite ? 'allow' : 'deny'}`,

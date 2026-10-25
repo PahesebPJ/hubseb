@@ -4,6 +4,11 @@ export type HostId = (typeof SUPPORTED_HOSTS)[number]
 export type ReasoningTier = 'fast' | 'balanced' | 'deep'
 export type UnitCapability = 'fs:read' | 'fs:write' | 'shell:run' | 'web:fetch' | 'web:search'
 
+export interface HostModelSpec {
+  model?: string
+  provider?: string
+}
+
 export interface SpecialistBlueprint {
   id: string
   summary: string
@@ -11,6 +16,36 @@ export interface SpecialistBlueprint {
   capabilities: UnitCapability[]
   maxSteps: number
   instructions: string
+  model?: string
+  hostModels?: Partial<Record<HostId, HostModelSpec>>
+}
+
+export function parseModelSpec(raw: string): HostModelSpec {
+  const trimmed = raw.trim()
+  if (!trimmed) return {}
+  const slashIdx = trimmed.indexOf('/')
+  if (slashIdx > 0) {
+    return {
+      model: trimmed.slice(slashIdx + 1),
+      provider: trimmed.slice(0, slashIdx),
+    }
+  }
+  return { model: trimmed }
+}
+
+export function resolveHostModel(spec: SpecialistBlueprint, hostId: HostId): HostModelSpec {
+  const hostEntry = spec.hostModels?.[hostId]
+  const rawModel = hostEntry?.model ?? spec.model
+  const explicitProvider = hostEntry?.provider
+  if (!rawModel) {
+    return explicitProvider ? { provider: explicitProvider } : {}
+  }
+  const parsed = parseModelSpec(rawModel)
+  const provider = explicitProvider ?? parsed.provider
+  return {
+    model: rawModel,
+    ...(provider ? { provider } : {}),
+  }
 }
 
 export interface SkillBlueprint {
@@ -134,6 +169,18 @@ export function parseSpecialistMarkdown(rawMarkdown: string, hostId: HostId): Sp
     }
   }
 
+  const hostModels: Partial<Record<HostId, HostModelSpec>> = {}
+  for (const h of SUPPORTED_HOSTS) {
+    const hm = fields[`model.${h}`]
+    const hp = fields[`provider.${h}`]
+    if (hm || hp) {
+      hostModels[h] = {
+        ...(hm ? { model: hm } : {}),
+        ...(hp ? { provider: hp } : {}),
+      }
+    }
+  }
+
   const stepsNum = Number(fields.maxSteps ?? fields.maxTurns ?? 40)
   return {
     id,
@@ -142,5 +189,7 @@ export function parseSpecialistMarkdown(rawMarkdown: string, hostId: HostId): Sp
     capabilities,
     maxSteps: Number.isNaN(stepsNum) ? 40 : stepsNum,
     instructions,
+    ...(fields.model ? { model: fields.model } : {}),
+    ...(Object.keys(hostModels).length > 0 ? { hostModels } : {}),
   }
 }

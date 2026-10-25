@@ -6,6 +6,7 @@ import {
   filterDialectBlocks,
   type HostId,
   type ReasoningTier,
+  resolveHostModel,
   type SpecialistBlueprint,
   type UnitCapability,
 } from '../blueprint.ts'
@@ -55,12 +56,18 @@ export class ClaudeHostDriver extends BaseHostDriver {
       }
     }
 
+    const { model } = resolveHostModel(spec, 'claude')
+    const resolvedModel =
+      model && model !== 'default'
+        ? model.replace(/^(?:ollama|lmstudio)\//, '')
+        : CLAUDE_MODELS[spec.tier]
+
     const lines = [
       '---',
       `name: ${spec.id}`,
       `description: ${JSON.stringify(spec.summary)}`,
       `tools: ${tools.join(', ')}`,
-      `model: ${CLAUDE_MODELS[spec.tier]}`,
+      `model: ${resolvedModel}`,
       `effort: ${CLAUDE_EFFORT[spec.tier]}`,
       `maxTurns: ${spec.maxSteps}`,
       '---',

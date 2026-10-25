@@ -101,4 +101,48 @@ describe('hubseb Polymorphic Host Drivers & SHA-256 Lockfile Deployer', () => {
       await rm(tmpDir, { recursive: true, force: true })
     }
   })
+
+  it('compiles custom models and local Ollama provider overrides across all 4 host drivers', () => {
+    const customSpecMd = `---
+id: developer
+summary: Especialista constructor de código.
+tier: deep
+capabilities: [fs:read, fs:write, shell:run]
+maxSteps: 45
+model.opencode: ollama/qwen2.5-coder:32b
+model.codex: ollama/deepseek-r1:32b
+model.claude: ollama/qwen2.5-coder:32b
+model.antigravity: pro
+---
+
+## Misión Operativa
+Construye código limpio.
+`
+    const hub = new DriverHub()
+
+    const opencodeOut = hub.compileSpecialistForHost(customSpecMd, 'opencode')
+    assert.match(opencodeOut.content, /mode: subagent\nmodel: ollama\/qwen2\.5-coder:32b\nsteps: 45/)
+
+    const codexOut = hub.compileSpecialistForHost(customSpecMd, 'codex')
+    assert.match(codexOut.content, /model = "deepseek-r1:32b"/)
+    assert.match(codexOut.content, /model_provider = "ollama"/)
+
+    const claudeOut = hub.compileSpecialistForHost(customSpecMd, 'claude')
+    assert.match(claudeOut.content, /model: qwen2\.5-coder:32b/)
+
+    const agyOut = hub.compileSpecialistForHost(customSpecMd, 'antigravity')
+    assert.match(agyOut.content, /model: pro/)
+
+    const fallbackSpecMd = `---
+id: developer
+summary: Especialista constructor de código.
+model: ollama/qwen2.5-coder:32b
+---
+
+## Misión Operativa
+Construye código limpio.
+`
+    const agyFallback = hub.compileSpecialistForHost(fallbackSpecMd, 'antigravity')
+    assert.match(agyFallback.content, /model: inherit/)
+  })
 })
