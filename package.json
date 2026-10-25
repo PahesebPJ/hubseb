@@ -1,0 +1,47 @@
+{
+  "name": "hubseb",
+  "version": "0.2.0",
+  "description": "Polymorphic multi-agent driver hub, SHA-256 lockfile deployer, and topology graph for *seb tools.",
+  "license": "MIT",
+  "author": "PahesebPJ",
+  "homepage": "https://github.com/PahesebPJ/hubseb#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PahesebPJ/hubseb.git"
+  },
+  "bugs": {
+    "url": "https://github.com/PahesebPJ/hubseb/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "hubseb": "./dist/bin/hubseb.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "AGENT_INSTALL.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node -e \"fs.chmodSync('dist/bin/hubseb.js', 0o755)\"",
+    "prepack": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "hubseb": "node src/bin/hubseb.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.2"
+  }
+}
