@@ -1,6 +1,6 @@
 {
   "name": "hubseb",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Polymorphic multi-agent driver hub, SHA-256 lockfile deployer, and topology graph for *seb tools.",
   "license": "MIT",
   "author": "PahesebPJ",

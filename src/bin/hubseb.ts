@@ -4,7 +4,7 @@ import { TopologyStore } from '../core/topology.ts'
 import { serializeWire, wireFailure, wireSuccess } from '../core/wire.ts'
 import { DriverHub } from '../drivers/hub.ts'
 
-export const VERSION = '0.2.0'
+export const VERSION = '0.3.0'
 
 export interface CliResult {
   exitCode: number
