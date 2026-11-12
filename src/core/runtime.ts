@@ -130,7 +130,13 @@ export class SystemRuntime {
   async execProcess(
     executable: string,
     args: readonly string[] = [],
-    options: { cwd?: string; env?: NodeJS.ProcessEnv; input?: string; timeoutMs?: number } = {},
+    options: {
+      cwd?: string
+      env?: NodeJS.ProcessEnv
+      input?: string
+      timeoutMs?: number
+      windowsHide?: boolean
+    } = {},
   ): Promise<ProcessOutcome> {
     return new Promise((resolve, reject) => {
       const needsShell = this.platform === 'win32' && /\.(cmd|bat)$/i.test(executable)
@@ -138,6 +144,7 @@ export class SystemRuntime {
         cwd: options.cwd,
         env: options.env ?? this.env,
         shell: needsShell,
+        windowsHide: options.windowsHide ?? true,
         stdio: ['pipe', 'pipe', 'pipe'],
       })
 
