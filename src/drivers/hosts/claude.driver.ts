@@ -56,7 +56,7 @@ export class ClaudeHostDriver extends BaseHostDriver {
       }
     }
 
-    const { model } = resolveHostModel(spec, 'claude')
+    const { model, effort } = resolveHostModel(spec, 'claude')
     const resolvedModel =
       model && model !== 'default'
         ? model.replace(/^(?:ollama|lmstudio)\//, '')
@@ -68,7 +68,7 @@ export class ClaudeHostDriver extends BaseHostDriver {
       `description: ${JSON.stringify(spec.summary)}`,
       `tools: ${tools.join(', ')}`,
       `model: ${resolvedModel}`,
-      `effort: ${CLAUDE_EFFORT[spec.tier]}`,
+      `effort: ${effort ?? CLAUDE_EFFORT[spec.tier]}`,
       `maxTurns: ${spec.maxSteps}`,
       '---',
       '',
