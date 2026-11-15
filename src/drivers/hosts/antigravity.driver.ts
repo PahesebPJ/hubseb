@@ -18,7 +18,19 @@ const AGY_TOOL_MAP: Record<UnitCapability, readonly string[]> = {
   'web:search': ['search_web'],
 }
 
-const AGY_NATIVE_MODELS = new Set(['inherit', 'flash_lite', 'flash', 'pro'])
+/**
+ * agy agent frontmatter only accepts these tiers: any concrete model id (e.g.
+ * gemini-4-hydrogen-xhigh) makes the loader skip the whole agent ("Invalid model tier").
+ * Concrete models and efforts are applied at invocation time (`agy --model <m> --effort <e>`).
+ */
+export const AGY_MODEL_TIERS = ['inherit', 'flash_lite', 'flash', 'pro'] as const
+export type AgyModelTier = (typeof AGY_MODEL_TIERS)[number]
+
+export function isAgyTier(value: unknown): value is AgyModelTier {
+  return typeof value === 'string' && (AGY_MODEL_TIERS as readonly string[]).includes(value)
+}
+
+const AGY_NATIVE_MODELS: ReadonlySet<string> = new Set(AGY_MODEL_TIERS)
 
 export class AntigravityHostDriver extends BaseHostDriver {
   readonly hostId: HostId = 'antigravity'

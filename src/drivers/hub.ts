@@ -18,6 +18,7 @@ import { OpenCodeHostDriver } from './hosts/opencode.driver.ts'
 
 export * from './base-driver.ts'
 export * from './blueprint.ts'
+export { AGY_MODEL_TIERS, type AgyModelTier, isAgyTier } from './hosts/antigravity.driver.ts'
 export {
   AntigravityHostDriver,
   ClaudeHostDriver,

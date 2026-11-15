@@ -4,9 +4,17 @@ export type HostId = (typeof SUPPORTED_HOSTS)[number]
 export type ReasoningTier = 'fast' | 'balanced' | 'deep'
 export type UnitCapability = 'fs:read' | 'fs:write' | 'shell:run' | 'web:fetch' | 'web:search'
 
+export const EFFORT_LEVELS = ['low', 'medium', 'high', 'xhigh', 'max'] as const
+export type EffortLevel = (typeof EFFORT_LEVELS)[number]
+
+export function isEffortLevel(value: unknown): value is EffortLevel {
+  return typeof value === 'string' && (EFFORT_LEVELS as readonly string[]).includes(value)
+}
+
 export interface HostModelSpec {
   model?: string
   provider?: string
+  effort?: EffortLevel
 }
 
 export interface SpecialistBlueprint {
@@ -17,6 +25,7 @@ export interface SpecialistBlueprint {
   maxSteps: number
   instructions: string
   model?: string
+  effort?: EffortLevel
   hostModels?: Partial<Record<HostId, HostModelSpec>>
 }
 
@@ -37,14 +46,17 @@ export function resolveHostModel(spec: SpecialistBlueprint, hostId: HostId): Hos
   const hostEntry = spec.hostModels?.[hostId]
   const rawModel = hostEntry?.model ?? spec.model
   const explicitProvider = hostEntry?.provider
+  const effort = hostEntry?.effort ?? spec.effort
+  const effortPart = effort ? { effort } : {}
   if (!rawModel) {
-    return explicitProvider ? { provider: explicitProvider } : {}
+    return { ...(explicitProvider ? { provider: explicitProvider } : {}), ...effortPart }
   }
   const parsed = parseModelSpec(rawModel)
   const provider = explicitProvider ?? parsed.provider
   return {
     model: rawModel,
     ...(provider ? { provider } : {}),
+    ...effortPart,
   }
 }
 
@@ -173,10 +185,13 @@ export function parseSpecialistMarkdown(rawMarkdown: string, hostId: HostId): Sp
   for (const h of SUPPORTED_HOSTS) {
     const hm = fields[`model.${h}`]
     const hp = fields[`provider.${h}`]
-    if (hm || hp) {
+    const he = fields[`effort.${h}`]
+    const effort = isEffortLevel(he) ? he : undefined
+    if (hm || hp || effort) {
       hostModels[h] = {
         ...(hm ? { model: hm } : {}),
         ...(hp ? { provider: hp } : {}),
+        ...(effort ? { effort } : {}),
       }
     }
   }
@@ -190,6 +205,7 @@ export function parseSpecialistMarkdown(rawMarkdown: string, hostId: HostId): Sp
     maxSteps: Number.isNaN(stepsNum) ? 40 : stepsNum,
     instructions,
     ...(fields.model ? { model: fields.model } : {}),
+    ...(isEffortLevel(fields.effort) ? { effort: fields.effort } : {}),
     ...(Object.keys(hostModels).length > 0 ? { hostModels } : {}),
   }
 }
